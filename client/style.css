@@ -1,19 +1,99 @@
-#username-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
+/* Reset default styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.modal-content {
-  background: white;
-  padding: 30px;
+/* Body styling */
+body {
+  background: #f0f2f5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  height: 100vh;
+  padding: 20px;
+}
+
+/* Chat container */
+#chat-container {
+  width: 100%;
+  max-width: 600px;
+  background: #ffffff;
   border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 90vh;
+}
+
+/* Message display area */
+#messages {
+  flex: 1;
+  padding: 15px;
+  overflow-y: auto;
+}
+
+/* Each message */
+.message {
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  max-width: 80%;
+  word-wrap: break-word;
+}
+
+/* User messages */
+.message.user {
+  background: #dcf8c6;
+  align-self: flex-end;
+}
+
+/* Other messages */
+.message.other {
+  background: #f1f0f0;
+  align-self: flex-start;
+}
+
+/* System messages */
+.message.system {
   text-align: center;
+  font-style: italic;
+  color: #666;
+  background: none;
+  padding: 5px;
+}
+
+/* Chat form */
+#chat-form {
+  display: flex;
+  padding: 10px;
+  border-top: 1px solid #ddd;
+  background: #fff;
+}
+
+#chat-input {
+  flex: 1;
+  padding: 10px;
+  border-radius: 20px;
+  border: 1px solid #ccc;
+  outline: none;
+  margin-right: 10px;
+}
+
+#send-button {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+#send-button:hover {
+  background: #0056b3;
 }
