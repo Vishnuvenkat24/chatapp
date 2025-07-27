@@ -1,45 +1,76 @@
 const socket = io();
 let username = "";
 
-const form = document.getElementById("form");
-const input = document.getElementById("input");
-const messages = document.getElementById("messages");
-const userCountDisplay = document.getElementById("user-count");
+const usernameContainer = document.getElementById("username-container");
+const chatContainer = document.getElementById("chat-container");
+const chatBox = document.getElementById("chat-box");
+const messageInput = document.getElementById("message-input");
+const userCount = document.getElementById("user-count");
 
-form.addEventListener("submit", (e) => {
-  e.preventDefault();
-  if (input.value && username) {
-    socket.emit("chat message", { user: username, text: input.value });
-    input.value = "";
-  }
-});
+// Show username input on load
+window.onload = () => {
+  usernameContainer.style.display = "block";
+  chatContainer.style.display = "none";
 
-function submitUsername() {
-  const nameInput = document.getElementById("username-input");
-  username = nameInput.value.trim();
-  if (username) {
+  // Enter key to join chat
+  document.getElementById("username-input").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      enterChat();
+    }
+  });
+
+  // Enter key to send message
+  messageInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      sendMessage();
+    }
+  });
+};
+
+function enterChat() {
+  const input = document.getElementById("username-input").value.trim();
+  if (input) {
+    username = input;
+    usernameContainer.style.display = "none";
+    chatContainer.style.display = "block";
     socket.emit("new user", username);
-    document.getElementById("username-modal").style.display = "none";
+  } else {
+    alert("Please enter a name!");
   }
 }
 
-// Display messages
-socket.on("chat message", (msg) => {
-  const item = document.createElement("li");
-  item.innerHTML = `<strong>${msg.user}:</strong> ${msg.text}`;
-  messages.appendChild(item);
-  messages.scrollTop = messages.scrollHeight;
+function sendMessage() {
+  const message = messageInput.value.trim();
+  if (message) {
+    socket.emit("chat message", { user: username, text: message });
+    messageInput.value = "";
+  }
+}
+
+socket.on("chat message", ({ user, text }) => {
+  const msg = document.createElement("div");
+  msg.classList.add("message");
+
+  if (user === username) {
+    msg.classList.add("my-message");
+    msg.innerHTML = `<div class="bubble right"><strong>You:</strong> ${text}</div>`;
+  } else {
+    msg.classList.add("other-message");
+    msg.innerHTML = `<div class="bubble left"><strong>${user}:</strong> ${text}</div>`;
+  }
+
+  chatBox.appendChild(msg);
+  chatBox.scrollTop = chatBox.scrollHeight;
 });
 
-// System messages (like "Vishnu joined")
 socket.on("system message", (msg) => {
-  const item = document.createElement("li");
-  item.style.color = "gray";
-  item.textContent = msg;
-  messages.appendChild(item);
+  const sys = document.createElement("div");
+  sys.classList.add("system");
+  sys.textContent = msg;
+  chatBox.appendChild(sys);
+  chatBox.scrollTop = chatBox.scrollHeight;
 });
 
-// User count
 socket.on("user count", (count) => {
-  userCountDisplay.textContent = `Users online: ${count}`;
+  userCount.textContent = `🟢 ${count} user${count !== 1 ? "s" : ""} online`;
 });

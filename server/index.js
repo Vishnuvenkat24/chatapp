@@ -1,27 +1,25 @@
-import express from "express";
-import http from "http";
-import { Server } from "socket.io";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// server.js
+const express = require("express");
+const path = require("path");
+const http = require("http");
+const socketIo = require("socket.io");
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = socketIo(server);
+
+let onlineUsers = 0;
 
 app.use(express.static(path.join(__dirname, "../client")));
 
-const users = new Map();
-
 io.on("connection", (socket) => {
-  console.log("New connection:", socket.id);
+  console.log("A user connected");
 
   socket.on("new user", (username) => {
-    users.set(socket.id, username);
-    io.emit("system message", `${username} joined the chat.`);
-    io.emit("user count", users.size);
+    socket.username = username;
+    onlineUsers++;
+    io.emit("system message", `${username} joined the chat`);
+    io.emit("user count", onlineUsers);
   });
 
   socket.on("chat message", ({ user, text }) => {
@@ -29,14 +27,13 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    const username = users.get(socket.id) || "Someone";
-    users.delete(socket.id);
-    io.emit("system message", `${username} left the chat.`);
-    io.emit("user count", users.size);
+    if (socket.username) {
+      onlineUsers--;
+      io.emit("system message", `${socket.username} left the chat`);
+      io.emit("user count", onlineUsers);
+    }
+    console.log("A user disconnected");
   });
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+c

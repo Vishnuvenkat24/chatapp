@@ -1,29 +1,29 @@
+<!-- index.html -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-  <title>Chat App</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Real-Time Chat</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
-  <div class="chat-container">
-    <h2>Chat Room</h2>
-    <p id="user-count">Users online: 0</p>
-    <ul id="messages"></ul>
-    <form id="form">
-      <input id="input" autocomplete="off" placeholder="Type your message..." />
-      <button>Send</button>
-    </form>
+  <div id="username-container">
+    <h2>Enter Your Name to Join Chat</h2>
+    <input type="text" id="username-input" placeholder="Enter name..." />
+    <button onclick="enterChat()">Join Chat</button>
   </div>
 
-  <!-- Username prompt -->
-  <div id="username-modal">
-    <div class="modal-content">
-      <h3>Enter your name</h3>
-      <input id="username-input" />
-      <button onclick="submitUsername()">Join Chat</button>
-    </div>
+  <div id="chat-container" style="display:none;">
+    <h2>Chat Room</h2>
+    <div id="chat-box"></div>
+    <input id="message-input" type="text" placeholder="Type a message..."
+      style="width: 80%; height: 40px; font-size: 16px;" />
+
+    <button onclick="sendMessage()">Send</button>
+    <div class="system" id="user-count">Users online: 0</div>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
