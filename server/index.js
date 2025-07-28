@@ -1,16 +1,26 @@
-// server.js
 const express = require("express");
-const path = require("path");
 const http = require("http");
+const path = require("path");
 const socketIo = require("socket.io");
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
+const io = socketIo(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
 
 let onlineUsers = 0;
 
+// ✅ Serve static files from the client folder
 app.use(express.static(path.join(__dirname, "../client")));
+
+// ✅ Serve index.html for any unmatched routes (for single-page app or basic HTML)
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../client/index.html"));
+});
 
 io.on("connection", (socket) => {
   console.log("A user connected");
@@ -36,4 +46,6 @@ io.on("connection", (socket) => {
   });
 });
 
-c
+server.listen(3000, () => {
+  console.log("Server is running on http://localhost:3000");
+});

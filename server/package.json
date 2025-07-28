@@ -1,8 +1,7 @@
 {
   "name": "chat-app-backend",
   "version": "1.0.0",
-  "main": "index.js",
-  "type": "module",
+  "main": "server.js",
   "scripts": {
     "start": "node index.js"
   },
