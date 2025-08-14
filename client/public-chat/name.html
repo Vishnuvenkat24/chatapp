@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Enter Name - Public Chat</title>
+  <link rel="stylesheet" href="name.css">
+</head>
+
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>🌐 Public Chat</h1>
+      <p class="subtitle">Enter your name to join the conversation</p>
+      <input type="text" id="username" placeholder="Your name" autofocus>
+      <button id="start-btn">Join Chat</button>
+    </div>
+  </div>
+
+  <script>
+    const usernameInput = document.getElementById("username");
+    const startBtn = document.getElementById("start-btn");
+
+    function goToChat() {
+      const name = usernameInput.value.trim();
+      if (name) {
+        localStorage.setItem("chatUsername", name);
+        window.location.href = "chat.html";
+      } else {
+        usernameInput.classList.add("shake");
+        setTimeout(() => usernameInput.classList.remove("shake"), 500);
+      }
+    }
+
+    startBtn.addEventListener("click", goToChat);
+
+    // Press Enter to submit
+    usernameInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        goToChat();
+      }
+    });
+  </script>
+</body>
+
+</html>

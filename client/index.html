@@ -1,33 +1,21 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Real-Time Chat</title>
+  <title>Choose Chat Mode</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
-  <div id="username-container">
-    <h2>Enter Your Name to Join Chat</h2>
-    <input type="text" id="username-input" placeholder="Enter name..." />
-    <button onclick="enterChat()">Join Chat</button>
+  <div class="container">
+    <h1>Choose a Chat Mode</h1>
+    <button class="mode-btn" onclick="location.href='public-chat/name.html'">🌍 Public Chat</button>
+    <button class="mode-btn" onclick="location.href='anonymous.html'">👤 Anonymous Chat</button>
+    <button class="mode-btn" onclick="location.href='room.html'">🏠 Join/Create Room</button>
+    <div class="footer-note">Your data is not stored. Chat responsibly 💬</div>
   </div>
-
-  <div id="chat-container" style="display:none;">
-    <h2>Chat Room</h2>
-    <div id="chat-box"></div>
-    <input id="message-input" type="text" placeholder="Type a message..."
-      style="width: 80%; height: 40px; font-size: 16px;" />
-
-    <button onclick="sendMessage()">Send</button>
-    <div class="system" id="user-count">Users online: 0</div>
-  </div>
-
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="script.js"></script>
 </body>
 
 </html>
