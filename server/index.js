@@ -1,154 +1,161 @@
-// server.js
-const http = require("http");
-const express = require("express");
-const app = express();
 const path = require("path");
+const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
 
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server, { cors: { origin: "*" } });
 
-const server = http.createServer(app); // ✅ THIS creates the actual server
+// ================== Serve static pages ==================
+app.use("/public", express.static(path.join(__dirname, "../client/public_chat")));
+app.use("/anon", express.static(path.join(__dirname, "../client/anonymous_chat")));
+app.use("/private", express.static(path.join(__dirname, "../client/private_chat")));
 
-const io = require("socket.io")(server); // ✅ attach Socket.IO to the server
+// ================== Socket.IO Logic ==================
 
-// Serve public and anonymous chats separately
-app.use("/public-chat", express.static(path.join(__dirname, "../client/public-chat")));
-app.use("/anonymous-chat", express.static(path.join(__dirname, "../client/anonymous-chat")));
+// ===== Public Chat =====
+let activeUsers = {};
 
-// Serve index.html and style.css
-app.use(express.static(path.join(__dirname, "../client")));
+io.of("/public").on("connection", (socket) => {
+  console.log("Public chat user connected");
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "../client/index.html"));
-});
-// Public Chat page
-app.get("/public-chat", (req, res) => {
-  res.sendFile(path.join(__dirname, "../client/public-chat/index.html"));
-});
-
-// Anonymous Chat page
-app.get("/anonymous-chat", (req, res) => {
-  res.sendFile(path.join(__dirname, "../client/anonymous-chat/index.html"));
-});
-
-// Room Chat page
-app.get("/room-chat", (req, res) => {
-  res.sendFile(path.join(__dirname, "../client/room-chat/index.html"));
-});
-
-
-
-let onlineUsers = 0;
-let anonymousQueue = [];
-let anonymousPairs = new Map();
-let publicChatHistory = [];
-const roomChats = {}; // { roomCode: [{ user, text, time }] }
-const roomUsers = {}; // { roomCode: Set(socket.id) }
-
-io.on("connection", (socket) => {
-  console.log("🔌 User connected");
-
-  // Public chat logic
-  socket.on("join public", (username) => {
-    socket.username = username;
-    onlineUsers++;
-    io.emit("system message", `${username} joined`);
-    io.emit("user count", onlineUsers);
-    socket.emit("chat history", publicChatHistory);
+  socket.on("join", (username) => {
+    activeUsers[socket.id] = username;
+    io.of("/public").emit("userList", Object.values(activeUsers));
+    io.of("/public").emit("systemMessage", `${username} joined the chat`);
   });
 
-  socket.on("public message", (msg) => {
-    const message = {
-      user: socket.username,
-      text: msg,
-      time: new Date().toLocaleTimeString()
-    };
-    publicChatHistory.push(message);
-    if (publicChatHistory.length > 100) publicChatHistory.shift();
-    io.emit("public message", message);
-  });
-
-  // Anonymous chat pairing logic
-  socket.on("join anonymous", () => {
-    if (anonymousQueue.length > 0) {
-      const partnerId = anonymousQueue.shift();
-      anonymousPairs.set(socket.id, partnerId);
-      anonymousPairs.set(partnerId, socket.id);
-
-      socket.emit("partner found");
-      io.to(partnerId).emit("partner found");
-    } else {
-      anonymousQueue.push(socket.id);
-      socket.emit("searching");
-    }
-  });
-
-  socket.on("anonymous message", (msg) => {
-    const partnerId = anonymousPairs.get(socket.id);
-    if (partnerId) {
-      io.to(partnerId).emit("anonymous message", {
-        text: msg,
-        time: new Date().toLocaleTimeString()
-      });
-    }
-  });
-
-  socket.on("typing", () => {
-    const partnerId = anonymousPairs.get(socket.id);
-    if (partnerId) {
-      io.to(partnerId).emit("typing");
-    }
-  });
-
-  socket.on("cancel search", () => {
-    anonymousQueue = anonymousQueue.filter(id => id !== socket.id);
-    socket.emit("search cancelled");
-  });
-
-  // Room-based chat logic
-  socket.on("join room", ({ roomCode, username }) => {
-    socket.join(roomCode);
-    socket.username = username;
-    if (!roomChats[roomCode]) roomChats[roomCode] = [];
-    if (!roomUsers[roomCode]) roomUsers[roomCode] = new Set();
-    roomUsers[roomCode].add(socket.id);
-    socket.emit("room history", roomChats[roomCode]);
-    io.to(roomCode).emit("room system", `${username} joined room ${roomCode}`);
-  });
-
-  socket.on("room message", ({ roomCode, text }) => {
-    const message = {
-      user: socket.username,
-      text,
-      time: new Date().toLocaleTimeString()
-    };
-    roomChats[roomCode].push(message);
-    if (roomChats[roomCode].length > 100) roomChats[roomCode].shift();
-    io.to(roomCode).emit("room message", message);
+  socket.on("message", (data) => {
+    io.of("/public").emit("message", data);
   });
 
   socket.on("disconnect", () => {
-    if (socket.username) {
-      onlineUsers--;
-      io.emit("system message", `${socket.username} left`);
-      io.emit("user count", onlineUsers);
+    const username = activeUsers[socket.id];
+    delete activeUsers[socket.id];
+    io.of("/public").emit("userList", Object.values(activeUsers));
+    if (username) {
+      io.of("/public").emit("systemMessage", `${username} left the chat`);
     }
-
-    if (anonymousPairs.has(socket.id)) {
-      const partnerId = anonymousPairs.get(socket.id);
-      anonymousPairs.delete(socket.id);
-      anonymousPairs.delete(partnerId);
-      io.to(partnerId).emit("partner disconnected");
-    } else {
-      anonymousQueue = anonymousQueue.filter(id => id !== socket.id);
-    }
-
-    for (const roomCode in roomUsers) {
-      roomUsers[roomCode].delete(socket.id);
-    }
-
-    console.log("❌ User disconnected");
   });
 });
 
-server.listen(3000, () => {
-  console.log("🚀 Server running on http://localhost:3000");
+// ===== Anonymous Chat =====
+const waitingQueue = [];
+const partnerOf = new Map();
+
+function tryMatchAnon() {
+  while (waitingQueue.length >= 2) {
+    const a = waitingQueue.shift();
+    const b = waitingQueue.shift();
+    if (!io.of("/anon").sockets.get(a) || !io.of("/anon").sockets.get(b)) continue;
+
+    partnerOf.set(a, b);
+    partnerOf.set(b, a);
+
+    io.of("/anon").to(a).emit("paired", { partnerLabel: "Stranger" });
+    io.of("/anon").to(b).emit("paired", { partnerLabel: "Stranger" });
+  }
+}
+
+function removeFromQueueAnon(id) {
+  const idx = waitingQueue.indexOf(id);
+  if (idx !== -1) waitingQueue.splice(idx, 1);
+}
+
+function breakPairAnon(id, reason = "disconnected") {
+  const partner = partnerOf.get(id);
+  if (partner) {
+    partnerOf.delete(partner);
+    partnerOf.delete(id);
+    io.of("/anon").to(partner).emit("partner_left", { reason });
+  }
+}
+
+io.of("/anon").on("connection", (socket) => {
+  socket.on("join_anon", ({ name }) => {
+    removeFromQueueAnon(socket.id);
+    waitingQueue.push(socket.id);
+    io.of("/anon").to(socket.id).emit("queue_status", { inQueue: true });
+    tryMatchAnon();
+  });
+
+  socket.on("msg", ({ text }) => {
+    const partner = partnerOf.get(socket.id);
+    if (partner && typeof text === "string" && text.trim()) {
+      io.of("/anon").to(partner).emit("msg", { from: "Stranger", text });
+    }
+  });
+
+  socket.on("typing", (isTyping) => {
+    const partner = partnerOf.get(socket.id);
+    if (partner) io.of("/anon").to(partner).emit("partner_typing", !!isTyping);
+  });
+
+  socket.on("next", () => {
+    breakPairAnon(socket.id, "skipped");
+    removeFromQueueAnon(socket.id);
+    waitingQueue.push(socket.id);
+    io.of("/anon").to(socket.id).emit("queue_status", { inQueue: true });
+    tryMatchAnon();
+  });
+
+  socket.on("leave", () => {
+    breakPairAnon(socket.id, "left");
+    removeFromQueueAnon(socket.id);
+    io.of("/anon").to(socket.id).emit("left_ack");
+  });
+
+  socket.on("disconnect", () => {
+    breakPairAnon(socket.id, "disconnected");
+    removeFromQueueAnon(socket.id);
+  });
+});
+
+// ===== Private Chat (Join/Create) =====
+const rooms = {};
+
+function generateRoomCode() {
+  return Math.random().toString(36).substr(2, 6).toUpperCase();
+}
+
+io.of("/private").on("connection", (socket) => {
+  socket.on("createRoom", (username) => {
+    const code = generateRoomCode();
+    rooms[code] = [socket.id];
+    socket.join(code);
+    socket.emit("roomCreated", code);
+    socket.username = username;
+  });
+
+  socket.on("joinRoom", ({ username, code }) => {
+    if (rooms[code]) {
+      rooms[code].push(socket.id);
+      socket.join(code);
+      socket.username = username;
+      io.of("/private").to(code).emit("systemMessage", `${username} joined room ${code}`);
+    } else {
+      socket.emit("errorMessage", "Room not found!");
+    }
+  });
+
+  socket.on("privateMessage", ({ code, message }) => {
+    io.of("/private").to(code).emit("privateMessage", { username: socket.username, message });
+  });
+
+  socket.on("disconnect", () => {
+    for (const code in rooms) {
+      if (rooms[code].includes(socket.id)) {
+        rooms[code] = rooms[code].filter(id => id !== socket.id);
+        io.of("/private").to(code).emit("systemMessage", `${socket.username || 'A user'} left the room`);
+        if (rooms[code].length === 0) delete rooms[code];
+      }
+    }
+  });
+});
+
+// ================== Start Server ==================
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}`);
 });

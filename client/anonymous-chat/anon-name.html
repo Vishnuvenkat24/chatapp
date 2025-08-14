@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Anonymous Chat – Enter Name</title>
+  <link rel="stylesheet" href="anon-shared.css">
+</head>
+
+<body class="bg">
+  <div class="center">
+    <div class="card">
+      <h1>🔀 Anonymous Chat</h1>
+      <p class="muted">Enter a name (for you only). Your partner sees you as <b>“Stranger”</b>.</p>
+      <input id="name" type="text" placeholder="Your display name" autofocus />
+      <button id="go">Find a Stranger</button>
+    </div>
+  </div>
+
+  <script>
+    const nameInput = document.getElementById("name");
+    const goBtn = document.getElementById("go");
+
+    function proceed() {
+      const name = nameInput.value.trim();
+      if (!name) {
+        nameInput.classList.add("shake");
+        setTimeout(() => nameInput.classList.remove("shake"), 400);
+        return;
+      }
+      localStorage.setItem("anonName", name);
+      window.location.href = "anon-chat.html";
+    }
+
+    goBtn.addEventListener("click", proceed);
+    nameInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") proceed();
+    });
+  </script>
+</body>
+
+</html>

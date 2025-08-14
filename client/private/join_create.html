@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Private Chat Rooms</title>
+  <link rel="stylesheet" href="join_create.css" />
+</head>
+
+<body>
+  <div class="container">
+    <h1>🔒 Private Chat</h1>
+    <p>Select an option</p>
+
+    <div class="buttons">
+      <button id="create-btn">Create Room</button>
+      <button id="join-btn">Join Room</button>
+    </div>
+
+    <div id="create-room-section" class="hidden">
+      <h2>✅ Room Created</h2>
+      <p>Share this Room ID:</p>
+      <div class="room-id" id="created-room-id"></div>
+      <button id="start-chat-btn">Start Chat</button>
+    </div>
+
+    <div id="join-room-section" class="hidden">
+      <h2>🔑 Join Room</h2>
+      <input type="text" id="join-room-id" placeholder="Enter Room ID" maxlength="10" />
+      <button id="join-room-submit">Join</button>
+      <p id="error-msg" class="error"></p>
+    </div>
+  </div>
+
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="join_create.js"></script>
+</body>
+
+</html>

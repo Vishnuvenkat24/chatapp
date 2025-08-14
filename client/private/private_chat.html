@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Private Chat</title>
+  <link rel="stylesheet" href="private_chat.css"> <!-- Reuse the same CSS -->
+</head>
+
+<body>
+  <div id="app">
+    <!-- Left Sidebar: Active Users -->
+    <aside id="user-list">
+      <h2>👥 Users (<span id="user-count">0</span>)</h2>
+      <ul id="users"></ul>
+    </aside>
+
+    <!-- Main Chat Section -->
+    <main id="chat-wrapper">
+      <header>
+        <h1>🔒 Private Chat</h1>
+        <p id="room-id-display"></p>
+      </header>
+
+      <section id="messages"></section>
+
+      <form id="message-form">
+        <input type="text" id="message-input" placeholder="Type a message..." required>
+        <button type="submit" id="send-btn">Send</button>
+      </form>
+    </main>
+
+    <!-- Right Sidebar: Features -->
+    <aside id="features">
+      <h2>😊 Emojis</h2>
+      <div id="emoji-panel">
+        <span>😀</span><span>😂</span><span>❤️</span><span>👍</span>
+        <span>🔥</span><span>😎</span><span>🎉</span><span>😢</span>
+      </div>
+    </aside>
+  </div>
+
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="private_chat.js"></script>
+</body>
+
+</html>

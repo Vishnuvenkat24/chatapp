@@ -1,0 +1,134 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #6a11cb, #2575fc);
+  color: white;
+  height: 100vh;
+}
+
+#app {
+  display: grid;
+  grid-template-columns: 200px 1fr 200px;
+  height: 100%;
+}
+
+/* Left Sidebar - Users */
+#user-list {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  padding: 15px;
+}
+
+#user-list h2 {
+  font-size: 1.1rem;
+  margin-bottom: 10px;
+}
+
+#users {
+  list-style: none;
+}
+
+#users li {
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  margin-bottom: 6px;
+  border-radius: 6px;
+}
+
+/* Main Chat Area */
+#chat-wrapper {
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  padding: 10px;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+#room-id-display {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+#messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+}
+
+.message {
+  margin-bottom: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+.message.user {
+  background: #00ffae;
+  color: #000;
+  text-align: right;
+}
+
+.message.other {
+  background: #ffffff33;
+}
+
+.system-message {
+  text-align: center;
+  font-size: 0.85rem;
+  opacity: 0.7;
+  margin: 5px 0;
+}
+
+/* Chat Form */
+#message-form {
+  display: flex;
+  gap: 8px;
+}
+
+#message-input {
+  flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+}
+
+#send-btn {
+  background: #2575fc;
+  border: none;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* Right Sidebar - Features */
+#features {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  padding: 15px;
+}
+
+#emoji-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+#emoji-panel span {
+  font-size: 1.4rem;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+#emoji-panel span:hover {
+  transform: scale(1.2);
+}
