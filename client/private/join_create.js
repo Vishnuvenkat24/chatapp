@@ -1,51 +1,45 @@
-const socket = io("http://localhost:3000");
+const socket = io("/private");
 
-const createBtn = document.getElementById("create-btn");
-const joinBtn = document.getElementById("join-btn");
-const createRoomSection = document.getElementById("create-room-section");
-const joinRoomSection = document.getElementById("join-room-section");
-const createdRoomIdDisplay = document.getElementById("created-room-id");
-const startChatBtn = document.getElementById("start-chat-btn");
-const joinRoomSubmit = document.getElementById("join-room-submit");
-const joinRoomIdInput = document.getElementById("join-room-id");
-const errorMsg = document.getElementById("error-msg");
+// Show create/join sections
+document.getElementById("create-btn").onclick = () => {
+  document.getElementById("create-room-section").classList.remove("hidden");
+  document.getElementById("join-room-section").classList.add("hidden");
+};
+document.getElementById("join-btn").onclick = () => {
+  document.getElementById("join-room-section").classList.remove("hidden");
+  document.getElementById("create-room-section").classList.add("hidden");
+};
 
-let generatedRoomId = "";
+// Create Room
+document.getElementById("start-chat-btn").onclick = () => {
+  const username = prompt("Enter your name:");
+  const roomCode = document.getElementById("created-room-id").textContent;
+  if (username && roomCode) {
+    localStorage.setItem("username", username);
+    localStorage.setItem("roomCode", roomCode);
+    window.location.href = "private_chat.html";
+  }
+};
 
-function generateRoomId() {
-  return Math.random().toString(36).substring(2, 7) + Math.floor(Math.random() * 1000);
-}
-
-createBtn.addEventListener("click", () => {
-  generatedRoomId = generateRoomId();
-  createdRoomIdDisplay.textContent = generatedRoomId;
-  localStorage.setItem("roomId", generatedRoomId);
-  createRoomSection.classList.remove("hidden");
-  joinRoomSection.classList.add("hidden");
-});
-
-joinBtn.addEventListener("click", () => {
-  createRoomSection.classList.add("hidden");
-  joinRoomSection.classList.remove("hidden");
-});
-
-startChatBtn.addEventListener("click", () => {
-  socket.emit("createRoom", generatedRoomId);
-  window.location.href = `private_chat.html?room=${generatedRoomId}`;
-});
-
-joinRoomSubmit.addEventListener("click", () => {
-  const roomId = joinRoomIdInput.value.trim();
-  if (!roomId) {
-    errorMsg.textContent = "Please enter a Room ID";
+// Join Room
+document.getElementById("join-room-submit").onclick = () => {
+  const username = prompt("Enter your name:");
+  const roomCode = document.getElementById("join-room-id").value.trim();
+  if (!roomCode) {
+    document.getElementById("error-msg").textContent = "Please enter a Room ID.";
     return;
   }
-  socket.emit("checkRoom", roomId, (exists) => {
-    if (exists) {
-      localStorage.setItem("roomId", roomId);
-      window.location.href = `private_chat.html?room=${roomId}`;
-    } else {
-      errorMsg.textContent = "Room not found!";
-    }
-  });
-});
+  if (username) {
+    localStorage.setItem("username", username);
+    localStorage.setItem("roomCode", roomCode);
+    window.location.href = "private_chat.html";
+  }
+};
+
+// Example: When creating a room, generate a random code and display it
+document.getElementById("create-btn").onclick = () => {
+  document.getElementById("create-room-section").classList.remove("hidden");
+  document.getElementById("join-room-section").classList.add("hidden");
+  const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+  document.getElementById("created-room-id").textContent = code;
+};

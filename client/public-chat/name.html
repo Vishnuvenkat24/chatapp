@@ -25,7 +25,8 @@
     function goToChat() {
       const name = usernameInput.value.trim();
       if (name) {
-        localStorage.setItem("chatUsername", name);
+        // Save under a consistent key for all chats
+        localStorage.setItem("username", name);
         window.location.href = "chat.html";
       } else {
         usernameInput.classList.add("shake");

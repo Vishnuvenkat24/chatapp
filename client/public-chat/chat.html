@@ -8,33 +8,23 @@
   <link rel="stylesheet" href="chat.css">
 </head>
 
-<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-<script src="chat.js"></script>
-
 <body>
   <div id="app">
-    <!-- Left Sidebar: Active Users -->
     <aside id="user-list">
-      <h2>👥 Users (<span id="user-count">0</span>)</h2>
+      <h2>👥 Users (<span id="user-count"></span>)</h2>
       <ul id="users"></ul>
     </aside>
-
-    <!-- Main Chat Section -->
     <main id="chat-wrapper">
       <header>
         <h1>🌐 Public Chat</h1>
         <p id="welcome-text"></p>
       </header>
-
       <section id="messages"></section>
-
       <form id="message-form">
         <input type="text" id="message-input" placeholder="Type a message..." required>
         <button type="submit" id="send-btn">Send</button>
       </form>
     </main>
-
-    <!-- Right Sidebar: Features -->
     <aside id="features">
       <h2>😊 Emojis</h2>
       <div id="emoji-panel">
@@ -43,7 +33,8 @@
       </div>
     </aside>
   </div>
-
+  <button onclick="location.href='private/private_chat.html'">🔒 Private Chat</button>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script src="chat.js"></script>
 </body>
 

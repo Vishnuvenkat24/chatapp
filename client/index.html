@@ -16,6 +16,28 @@
     <button class="mode-btn" onclick="location.href='private/join_create.html'">🏠 Join/Create Room</button>
     <div class="footer-note">Your data is not stored. Chat responsibly 💬</div>
   </div>
+  <script src="path/to/your/socket.io.js"></script>
+  <script src="path/to/your/client-side/javascript.js"></script>
+  <script>
+    const socket = io("/public");
+    socket.emit("join", username);
+
+    socket.on("userList", (users) => {
+      // update user list in DOM
+    });
+
+    socket.on("systemMessage", (msg) => {
+      // display system message in chat
+    });
+
+    document.querySelectorAll("#emoji-panel span").forEach(emoji => {
+      emoji.addEventListener("click", () => {
+        const input = document.getElementById("message-input");
+        input.value += emoji.textContent;
+        input.focus();
+      });
+    });
+  </script>
 </body>
 
 </html>

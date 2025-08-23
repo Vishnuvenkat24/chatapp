@@ -8,12 +8,12 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
 // ================== Serve static pages ==================
-app.use("/public", express.static(path.join(__dirname, "../client/public_chat")));
-app.use("/anon", express.static(path.join(__dirname, "../client/anonymous_chat")));
-app.use("/private", express.static(path.join(__dirname, "../client/private_chat")));
+
+app.use(express.static(path.join(__dirname, "../client")));
 
 // ================== Socket.IO Logic ==================
 
+// ===== Public Chat =====
 // ===== Public Chat =====
 let activeUsers = {};
 
@@ -24,10 +24,17 @@ io.of("/public").on("connection", (socket) => {
     activeUsers[socket.id] = username;
     io.of("/public").emit("userList", Object.values(activeUsers));
     io.of("/public").emit("systemMessage", `${username} joined the chat`);
+    console.log(`[JOIN] ${username}`);
   });
 
   socket.on("message", (data) => {
+    console.log(`[MESSAGE] ${data.username}: ${data.message}`);
     io.of("/public").emit("message", data);
+  });
+
+  socket.on("typing", (isTyping) => {
+    const username = activeUsers[socket.id];
+    socket.broadcast.emit("typing", { username, isTyping });
   });
 
   socket.on("disconnect", () => {
@@ -36,9 +43,11 @@ io.of("/public").on("connection", (socket) => {
     io.of("/public").emit("userList", Object.values(activeUsers));
     if (username) {
       io.of("/public").emit("systemMessage", `${username} left the chat`);
+      console.log(`[LEAVE] ${username}`);
     }
   });
 });
+
 
 // ===== Anonymous Chat =====
 const waitingQueue = [];
@@ -112,46 +121,36 @@ io.of("/anon").on("connection", (socket) => {
   });
 });
 
-// ===== Private Chat (Join/Create) =====
-const rooms = {};
-
-function generateRoomCode() {
-  return Math.random().toString(36).substr(2, 6).toUpperCase();
-}
+// --- Private Chat Namespace ---
+const activeRooms = {}; // { roomCode: { socketId: username } }
 
 io.of("/private").on("connection", (socket) => {
-  socket.on("createRoom", (username) => {
-    const code = generateRoomCode();
-    rooms[code] = [socket.id];
-    socket.join(code);
-    socket.emit("roomCreated", code);
-    socket.username = username;
-  });
-
   socket.on("joinRoom", ({ username, code }) => {
-    if (rooms[code]) {
-      rooms[code].push(socket.id);
-      socket.join(code);
-      socket.username = username;
-      io.of("/private").to(code).emit("systemMessage", `${username} joined room ${code}`);
-    } else {
-      socket.emit("errorMessage", "Room not found!");
-    }
-  });
+    socket.join(code);
 
-  socket.on("privateMessage", ({ code, message }) => {
-    io.of("/private").to(code).emit("privateMessage", { username: socket.username, message });
+    if (!activeRooms[code]) activeRooms[code] = {};
+    activeRooms[code][socket.id] = username;
+
+    io.of("/private").to(code).emit("userList", Object.values(activeRooms[code]));
+    io.of("/private").to(code).emit("systemMessage", `${username} joined room ${code}`);
   });
 
   socket.on("disconnect", () => {
-    for (const code in rooms) {
-      if (rooms[code].includes(socket.id)) {
-        rooms[code] = rooms[code].filter(id => id !== socket.id);
-        io.of("/private").to(code).emit("systemMessage", `${socket.username || 'A user'} left the room`);
-        if (rooms[code].length === 0) delete rooms[code];
+    for (const code in activeRooms) {
+      if (activeRooms[code][socket.id]) {
+        const username = activeRooms[code][socket.id];
+        delete activeRooms[code][socket.id];
+        io.of("/private").to(code).emit("userList", Object.values(activeRooms[code]));
+        io.of("/private").to(code).emit("systemMessage", `${username} left room ${code}`);
+        if (Object.keys(activeRooms[code]).length === 0) delete activeRooms[code];
+        break;
       }
     }
   });
+});
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "../client/index.html"));
 });
 
 // ================== Start Server ==================
@@ -159,3 +158,10 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
+
+
+
+
+
+
+

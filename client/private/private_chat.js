@@ -1,68 +1,62 @@
-const socket = io();
+const username = localStorage.getItem("username");
+const roomCode = localStorage.getItem("roomCode");
+const socket = io("/private");
 
-// Get room ID from URL
-const params = new URLSearchParams(window.location.search);
-const roomId = params.get("room");
-const username = sessionStorage.getItem("private_username") || "Guest";
-
-if (!roomId) {
-  alert("No room ID found! Please create or join a room first.");
-  window.location.href = "/private";
+if (!username || !roomCode) {
+  window.location.href = "join_create.html";
 }
 
-// Display room ID
-document.getElementById("room-id-display").textContent = `Room ID: ${roomId}`;
-
-// DOM Elements
-const userCountEl = document.getElementById("user-count");
-const usersList = document.getElementById("users");
-const messagesEl = document.getElementById("messages");
-const form = document.getElementById("message-form");
-const input = document.getElementById("message-input");
-const emojiPanel = document.getElementById("emoji-panel");
+document.getElementById("room-id-display").textContent = `Room: ${roomCode}`;
 
 // Join room
-socket.emit("joinRoom", { username, roomId });
+socket.emit("joinRoom", { username, code: roomCode });
 
 // Update user list
 socket.on("userList", (users) => {
-  userCountEl.textContent = users.length;
-  usersList.innerHTML = users.map(user => `<li>${user}</li>`).join("");
+  document.getElementById("user-count").textContent = users.length;
+  const userList = document.getElementById("users");
+  userList.innerHTML = "";
+  users.forEach(user => {
+    const li = document.createElement("li");
+    li.textContent = user;
+    userList.appendChild(li);
+  });
 });
 
-// Receive message
-socket.on("message", ({ username: sender, text }) => {
-  const msgDiv = document.createElement("div");
-  msgDiv.classList.add("message");
-  msgDiv.classList.add(sender === username ? "user" : "other");
-  msgDiv.innerHTML = `<strong>${sender}:</strong> ${text}`;
-  messagesEl.appendChild(msgDiv);
-  messagesEl.scrollTop = messagesEl.scrollHeight;
-});
+// System messages (join/leave)
+socket.on("systemMessage", (msg) => addMessage("system-message", msg));
 
-// System message
-socket.on("systemMessage", (text) => {
-  const sysDiv = document.createElement("div");
-  sysDiv.classList.add("system-message");
-  sysDiv.textContent = text;
-  messagesEl.appendChild(sysDiv);
-  messagesEl.scrollTop = messagesEl.scrollHeight;
+// Private messages
+socket.on("privateMessage", (data) => {
+  const isUser = data.username === username;
+  addMessage(isUser ? "user" : "other", `<strong>${data.username}:</strong> ${data.message}`);
 });
 
 // Send message
-form.addEventListener("submit", (e) => {
+document.getElementById("message-form").addEventListener("submit", (e) => {
   e.preventDefault();
-  const text = input.value.trim();
-  if (text) {
-    socket.emit("chatMessage", { roomId, text });
-    input.value = "";
+  const messageInput = document.getElementById("message-input");
+  const message = messageInput.value.trim();
+  if (message) {
+    socket.emit("privateMessage", { code: roomCode, username, message });
+    messageInput.value = "";
   }
 });
 
-// Emoji click
-emojiPanel.addEventListener("click", (e) => {
-  if (e.target.tagName === "SPAN") {
-    input.value += e.target.textContent;
+// Emoji click handler
+document.querySelectorAll("#emoji-panel span").forEach(emoji => {
+  emoji.addEventListener("click", () => {
+    const input = document.getElementById("message-input");
+    input.value += emoji.textContent;
     input.focus();
-  }
+  });
 });
+
+function addMessage(cssClass, content) {
+  const messages = document.getElementById("messages");
+  const div = document.createElement("div");
+  div.classList.add("message", cssClass);
+  div.innerHTML = content;
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+}
